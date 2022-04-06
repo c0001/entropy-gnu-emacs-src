@@ -1818,7 +1818,9 @@ handle_arith_signal (int sig)
 
 /* Alternate stack used by SIGSEGV handler below.  */
 
-static unsigned char sigsegv_stack[SIGSTKSZ];
+// static unsigned char sigsegv_stack[SIGSTKSZ];
+// Patched from https://www.reddit.com/r/emacs/comments/q99ygd/comment/hh2uynx/?utm_source=share&utm_medium=web2x&context=3
+static max_align_t sigsegv_stack[(64 * 1024 + sizeof (max_align_t) - 1) / sizeof (max_align_t)];
 
 
 /* Return true if SIGINFO indicates a stack overflow.  */
