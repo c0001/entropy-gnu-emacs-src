@@ -3340,6 +3340,23 @@ component .BUILD is present.  This is now stored separately in
 `emacs-build-number'.  */);
   Vemacs_version = build_string (emacs_version);
 
+    DEFVAR_BOOL ("eemacs-emacs-built-with-support-true-alpha-background-p",
+               eemacs_emacs_built_with_support_true_alpha_background_p,
+	       doc: /* Non-nil indicate whether current emacs built with
+supporting true alpha background feature.
+
+This feature can just be used in eemacs-emacs-28.2 with cairo built or
+official emacs-29 releases.
+
+A new frame parameter `alpha-background' is used instead of the
+obsolete `alpha' for implementing background transparency without font
+displaying with blurred.*/);
+#ifdef USE_CAIRO
+  eemacs_emacs_built_with_support_true_alpha_background_p = 1;
+#else
+  eemacs_emacs_built_with_support_true_alpha_background_p = 0;
+#endif
+
   DEFVAR_LISP ("report-emacs-bug-address", Vreport_emacs_bug_address,
 	       doc: /* Address of mailing list for GNU Emacs bugs.  */);
   Vreport_emacs_bug_address = build_string (emacs_bugreport);
