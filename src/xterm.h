@@ -408,7 +408,7 @@ struct x_display_info
   int ncolor_cells;
 
   /* Bits and shifts to use to compose pixel values on TrueColor visuals.  */
-  int red_bits, blue_bits, green_bits;
+  int red_bits, blue_bits, green_bits, alpha_bits;
   int red_offset, blue_offset, green_offset;
 
   /* The type of window manager we have.  If we move FRAME_OUTER_WINDOW
@@ -444,7 +444,8 @@ struct x_display_info
     Xatom_net_wm_state_maximized_horz, Xatom_net_wm_state_maximized_vert,
     Xatom_net_wm_state_sticky, Xatom_net_wm_state_above, Xatom_net_wm_state_below,
     Xatom_net_wm_state_hidden, Xatom_net_wm_state_skip_taskbar,
-    Xatom_net_frame_extents, Xatom_net_current_desktop, Xatom_net_workarea;
+    Xatom_net_frame_extents, Xatom_net_current_desktop,
+    Xatom_net_workarea, Xatom_net_wm_opaque_region;
 
   /* XSettings atoms and windows.  */
   Atom Xatom_xsettings_sel, Xatom_xsettings_prop, Xatom_xsettings_mgr;
@@ -474,6 +475,13 @@ struct x_display_info
 #ifdef HAVE_XDBE
   bool supports_xdbe;
 #endif
+
+#ifdef HAVE_XRENDER
+  bool xrender_supported_p;
+  int xrender_major;
+  int xrender_minor;
+#endif
+
 };
 
 #ifdef HAVE_X_I18N
@@ -840,6 +848,14 @@ extern void x_mark_frame_dirty (struct frame *f);
 
 /* This is the Visual which frame F is on.  */
 #define FRAME_X_VISUAL(f) FRAME_DISPLAY_INFO (f)->visual
+
+#ifdef HAVE_XRENDER
+#define FRAME_CHECK_XR_VERSION(f, major, minor)			\
+  (FRAME_DISPLAY_INFO (f)->xrender_supported_p			\
+   && ((FRAME_DISPLAY_INFO (f)->xrender_major == (major)	\
+	&& FRAME_DISPLAY_INFO (f)->xrender_minor >= (minor))	\
+       || (FRAME_DISPLAY_INFO (f)->xrender_major > (major))))
+#endif
 
 /* This is the Colormap which frame F uses.  */
 #define FRAME_X_COLORMAP(f) FRAME_DISPLAY_INFO (f)->cmap

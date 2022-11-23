@@ -717,6 +717,79 @@ x_set_wait_for_wm (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
 }
 
 static void
+x_set_alpha_background (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
+{
+  unsigned long opaque_region[] = {0, 0, FRAME_PIXEL_WIDTH (f),
+				   FRAME_PIXEL_HEIGHT (f)};
+#ifdef HAVE_GTK3
+  GObjectClass *object_class;
+  GtkWidgetClass *class;
+#endif
+
+  gui_set_alpha_background (f, arg, oldval);
+
+  // FIXME: we just disable it since we has non alpha_bits sets procedure in emacs_28
+/* #ifdef HAVE_XRENDER */
+/*   /\* Setting `alpha_background' to something other than opaque on a */
+/*      display that doesn't support the required features leads to */
+/*      confusing results.  *\/ */
+/*   if (f->alpha_background < 1.0 */
+/*       && !FRAME_DISPLAY_INFO (f)->alpha_bits */
+/*       && !FRAME_CHECK_XR_VERSION (f, 0, 2)) */
+/*     f->alpha_background = 1.0; */
+/* #else */
+/*   f->alpha_background = 1.0; */
+/* #endif */
+
+#ifdef USE_GTK
+  /* This prevents GTK from painting the window's background, which
+     interferes with transparent background in some environments */
+
+  if (!FRAME_TOOLTIP_P (f))
+    gtk_widget_set_app_paintable (FRAME_GTK_OUTER_WIDGET (f),
+				  f->alpha_background != 1.0);
+#endif
+
+  if (!FRAME_DISPLAY_INFO (f)->alpha_bits)
+    return;
+
+  if (f->alpha_background != 1.0)
+    {
+      XChangeProperty (FRAME_X_DISPLAY (f),
+		       FRAME_X_WINDOW (f),
+		       FRAME_DISPLAY_INFO (f)->Xatom_net_wm_opaque_region,
+		       XA_CARDINAL, 32, PropModeReplace,
+		       NULL, 0);
+    }
+#ifndef HAVE_GTK3
+  else
+    XChangeProperty (FRAME_X_DISPLAY (f),
+		     FRAME_X_WINDOW (f),
+		     FRAME_DISPLAY_INFO (f)->Xatom_net_wm_opaque_region,
+		     XA_CARDINAL, 32, PropModeReplace,
+		     (unsigned char *) &opaque_region, 4);
+#else
+  else
+    {
+      if (FRAME_TOOLTIP_P (f))
+	XChangeProperty (FRAME_X_DISPLAY (f),
+			 FRAME_X_WINDOW (f),
+			 FRAME_DISPLAY_INFO (f)->Xatom_net_wm_opaque_region,
+			 XA_CARDINAL, 32, PropModeReplace,
+			 (unsigned char *) &opaque_region, 4);
+      else
+	{
+	  object_class = G_OBJECT_GET_CLASS (FRAME_GTK_OUTER_WIDGET (f));
+	  class = GTK_WIDGET_CLASS (object_class);
+
+	  if (class->style_updated)
+	    class->style_updated (FRAME_GTK_OUTER_WIDGET (f));
+	}
+    }
+#endif
+}
+
+static void
 x_set_tool_bar_position (struct frame *f,
                          Lisp_Object new_value,
                          Lisp_Object old_value)
@@ -7831,7 +7904,7 @@ frame_parm_handler x_frame_parm_handlers[] =
   x_set_z_group,
   x_set_override_redirect,
   gui_set_no_special_glyphs,
-  gui_set_alpha_background,
+  x_set_alpha_background,
 };
 
 void

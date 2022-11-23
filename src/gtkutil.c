@@ -1199,6 +1199,7 @@ xg_create_frame_widgets (struct frame *f)
 #ifndef HAVE_GTK3
   GtkRcStyle *style;
 #endif
+  GtkWindowType type = GTK_WINDOW_TOPLEVEL;
   char *title = 0;
 
   block_input ();
@@ -1209,11 +1210,9 @@ xg_create_frame_widgets (struct frame *f)
       wtop = gtk_plug_new_for_display (gdpy, f->output_data.x->parent_desc);
     }
   else
-    wtop = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    wtop = gtk_window_new (type);
 
-  /* This prevents GTK from painting the window's background, which
-     would interfere with transparent background in some environments */
-  gtk_widget_set_app_paintable(wtop, TRUE);
+  gtk_widget_set_app_paintable(wtop, f->alpha_background != 1.0);
 
   /* gtk_window_set_has_resize_grip is a Gtk+ 3.0 function but Ubuntu
      has backported it to Gtk+ 2.0 and they add the resize grip for
