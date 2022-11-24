@@ -413,12 +413,26 @@ x_set_cr_source_with_gc_foreground (struct frame *f, GC gc)
 {
   XGCValues xgcv;
   XColor color;
+  unsigned int depth;
 
   XGetGCValues (FRAME_X_DISPLAY (f), gc, GCForeground, &xgcv);
   color.pixel = xgcv.foreground;
   x_query_colors (f, &color, 1);
-  cairo_set_source_rgb (FRAME_CR_CONTEXT (f), color.red / 65535.0,
-			color.green / 65535.0, color.blue / 65535.0);
+  depth = FRAME_DISPLAY_INFO (f)->n_planes;
+  if (f->alpha_background < 1.0 && depth == 32)
+    {
+      cairo_set_source_rgba (FRAME_CR_CONTEXT (f), color.red / 65535.0,
+			     color.green / 65535.0, color.blue / 65535.0,
+			     f->alpha_background);
+
+      cairo_set_operator (FRAME_CR_CONTEXT (f), CAIRO_OPERATOR_SOURCE);
+    }
+  else
+    {
+      cairo_set_source_rgb (FRAME_CR_CONTEXT (f), color.red / 65535.0,
+			    color.green / 65535.0, color.blue / 65535.0);
+      cairo_set_operator (FRAME_CR_CONTEXT (f), CAIRO_OPERATOR_OVER);
+    }
 }
 
 void
@@ -426,15 +440,29 @@ x_set_cr_source_with_gc_background (struct frame *f, GC gc)
 {
   XGCValues xgcv;
   XColor color;
+  unsigned int depth;
 
   XGetGCValues (FRAME_X_DISPLAY (f), gc, GCBackground, &xgcv);
   color.pixel = xgcv.background;
 
   x_query_colors (f, &color, 1);
-  cairo_set_source_rgba (FRAME_CR_CONTEXT (f), color.red / 65535.0,
-                         color.green / 65535.0, color.blue / 65535.0, f->alpha_background);
 
-  cairo_set_operator (FRAME_CR_CONTEXT (f), CAIRO_OPERATOR_SOURCE);
+  depth = FRAME_DISPLAY_INFO (f)->n_planes;
+
+  if (f->alpha_background < 1.0 && depth == 32)
+    {
+      cairo_set_source_rgba (FRAME_CR_CONTEXT (f), color.red / 65535.0,
+			     color.green / 65535.0, color.blue / 65535.0,
+			     f->alpha_background);
+
+      cairo_set_operator (FRAME_CR_CONTEXT (f), CAIRO_OPERATOR_SOURCE);
+    }
+  else
+    {
+      cairo_set_source_rgb (FRAME_CR_CONTEXT (f), color.red / 65535.0,
+			    color.green / 65535.0, color.blue / 65535.0);
+      cairo_set_operator (FRAME_CR_CONTEXT (f), CAIRO_OPERATOR_OVER);
+    }
 }
 
 static const cairo_user_data_key_t xlib_surface_key, saved_drawable_key;
